@@ -9,8 +9,9 @@ import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
 import Estates from "./pages/Estates";
 import Devices from "./pages/Devices";
-import Analytics from "./pages/Analytics";
-import NotFound from "./pages/NotFound";
+import Support from "./pages/Support"
+import Analytics from "./pages/Analytics"
+import NotFound from "./pages/NotFound"
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
                   <Route path="/users" element={<Users />} />
                   <Route path="/estates" element={<Estates />} />
                   <Route path="/devices" element={<Devices />} />
+                  <Route path="/support" element={<Support />} />
                   <Route path="/analytics" element={<Analytics />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
