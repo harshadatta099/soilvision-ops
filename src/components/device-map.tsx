@@ -1,16 +1,8 @@
-import { useEffect, useRef, useState } from "react"
-import { Loader } from "@googlemaps/js-api-loader"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Filter } from "lucide-react"
-
-// Declare global google object
-declare global {
-  interface Window {
-    google: typeof google;
-  }
-}
+import { MapPin } from "lucide-react"
 
 interface Device {
   id: string
@@ -62,17 +54,15 @@ const mockDevices: Device[] = [
 ]
 
 export function DeviceMap() {
-  const mapRef = useRef<HTMLDivElement>(null)
-  const [map, setMap] = useState<google.maps.Map | null>(null)
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>("all")
 
   const getMarkerColor = (status: Device['status']) => {
     switch (status) {
-      case 'online': return '#22c55e' // green
-      case 'warning': return '#f59e0b' // yellow  
-      case 'offline': return '#ef4444' // red
-      default: return '#6b7280' // gray
+      case 'online': return 'bg-success'
+      case 'warning': return 'bg-warning'  
+      case 'offline': return 'bg-destructive'
+      default: return 'bg-muted-foreground'
     }
   }
 
@@ -85,58 +75,18 @@ export function DeviceMap() {
     }
   }
 
-  useEffect(() => {
-    if (!mapRef.current) return
-
-    const loader = new Loader({
-      apiKey: "YOUR_GOOGLE_MAPS_API_KEY", // Replace with actual key
-      version: "weekly",
-    })
-
-    loader.load().then(() => {
-      const mapInstance = new google.maps.Map(mapRef.current!, {
-        center: { lat: -1.2921, lng: 36.8219 }, // Nairobi area
-        zoom: 11,
-        styles: [
-          {
-            "featureType": "all",
-            "elementType": "geometry.fill",
-            "stylers": [{ "weight": "2.00" }]
-          },
-          {
-            "featureType": "all", 
-            "elementType": "geometry.stroke",
-            "stylers": [{ "color": "#9c9c9c" }]
-          }
-        ]
-      })
-
-      setMap(mapInstance)
-
-      // Add device markers
-      mockDevices.forEach((device) => {
-        if (filterStatus !== "all" && device.status !== filterStatus) return
-
-        const marker = new google.maps.Marker({
-          position: { lat: device.lat, lng: device.lng },
-          map: mapInstance,
-          title: device.name,
-          icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 8,
-            fillColor: getMarkerColor(device.status),
-            fillOpacity: 0.8,
-            strokeWeight: 2,
-            strokeColor: '#ffffff'
-          }
-        })
-
-        marker.addListener('click', () => {
-          setSelectedDevice(device)
-        })
-      })
-    })
-  }, [filterStatus])
+  // Convert lat/lng to relative positions on our mock map
+  const getDevicePosition = (device: Device) => {
+    // Normalize coordinates to fit within a 400x300 area
+    // Using Nairobi area bounds approximately
+    const minLat = -1.31, maxLat = -1.27
+    const minLng = 36.80, maxLng = 36.86
+    
+    const x = ((device.lng - minLng) / (maxLng - minLng)) * 350 + 25
+    const y = ((maxLat - device.lat) / (maxLat - minLat)) * 250 + 25
+    
+    return { x: Math.max(25, Math.min(375, x)), y: Math.max(25, Math.min(275, y)) }
+  }
 
   const filteredDevices = mockDevices.filter(device => 
     filterStatus === "all" || device.status === filterStatus
@@ -187,10 +137,43 @@ export function DeviceMap() {
       </CardHeader>
       <CardContent>
         <div className="relative">
-          <div 
-            ref={mapRef} 
-            className="h-96 w-full rounded-lg bg-muted"
-          />
+          {/* Mock Map Background */}
+          <div className="h-96 w-full rounded-lg bg-gradient-to-br from-surface-light to-surface border border-border overflow-hidden">
+            {/* Grid pattern for map appearance */}
+            <div className="absolute inset-0 opacity-10">
+              <svg width="100%" height="100%">
+                <defs>
+                  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="0.5"/>
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+              </svg>
+            </div>
+            
+            {/* Mock geographic features */}
+            <div className="absolute top-8 left-8 w-16 h-12 bg-primary/20 rounded-full opacity-30"></div>
+            <div className="absolute bottom-16 right-12 w-20 h-8 bg-primary/15 rounded-lg opacity-40"></div>
+            <div className="absolute top-1/2 left-1/4 w-24 h-6 bg-primary/10 rounded-full opacity-50"></div>
+            
+            {/* Device Markers */}
+            {filteredDevices.map((device) => {
+              const position = getDevicePosition(device)
+              return (
+                <button
+                  key={device.id}
+                  className={`absolute w-4 h-4 rounded-full border-2 border-white shadow-lg hover:scale-125 transition-transform cursor-pointer ${getMarkerColor(device.status)}`}
+                  style={{
+                    left: `${position.x}px`,
+                    top: `${position.y}px`,
+                    transform: 'translate(-50%, -50%)'
+                  }}
+                  onClick={() => setSelectedDevice(device)}
+                  title={device.name}
+                />
+              )
+            })}
+          </div>
           
           {selectedDevice && (
             <div className="absolute top-4 right-4 bg-background border border-border rounded-lg p-4 shadow-lg max-w-xs">
