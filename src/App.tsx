@@ -11,6 +11,7 @@ import Estates from "./pages/Estates";
 import Devices from "./pages/Devices";
 import Support from "./pages/Support"
 import Analytics from "./pages/Analytics"
+import Reports from "./pages/Reports"
 import NotFound from "./pages/NotFound"
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
                   <Route path="/devices" element={<Devices />} />
                   <Route path="/support" element={<Support />} />
                   <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/reports" element={<Reports />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
